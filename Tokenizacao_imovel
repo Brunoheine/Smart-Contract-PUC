@@ -1,0 +1,98 @@
+pragma solidity 0.8.9;
+
+contract tokenizacaoimobiliaria
+
+ {
+     string nomecartorio;
+     string nomecondominio;
+     address incorporador;
+     address estado;
+     struct lote
+
+        {
+
+         uint numeromatricula;
+         uint numerocasa;
+         uint valordolote;
+         uint areaprivativa;
+         address proprietario;
+         bool disponivel;
+         bool negociavel;
+
+        }
+
+    mapping (uint => lote) public loteamento;
+    mapping (uint => bool) public numerodacasa;
+
+constructor
+
+    (string memory _nomecartorio,
+    string memory _nomecondominio,
+    address _estado)
+
+    {
+    nomecartorio = _nomecartorio;
+    nomecondominio = _nomecondominio;
+    estado = _estado;
+    incorporador = msg.sender;
+    }
+
+    function criarlote
+
+        (
+       // uint _id,
+        uint _numeromatricula,
+        uint _numerocasa,
+        uint _valordolote
+       // uint _areaprivativa,
+       // address _primeiroproprietario,
+       // bool _disponivel
+         //bool _negociavel
+         ) 
+         public
+            {
+            require(msg.sender == incorporador, "apenas o incorporador pode criar um lote");
+            require(loteamento[_numeromatricula].numeromatricula == 0, "matricula registrada");
+            require(numerodacasa[_numerocasa] == false, "casa ja existe");
+            require(_valordolote > 0, "favor inserir um valor diferente de zero");
+            lote memory loteNovo;
+             loteNovo.numeromatricula = _numeromatricula;
+            loteamento[_numeromatricula] = loteNovo;
+            }
+
+    function ComprarPropriedade (uint _numeromatricula) public payable
+          
+           {
+            require(loteamento[_numeromatricula].disponivel == true);
+            require(loteamento[_numeromatricula].valordolote == msg.value);
+            address _antigoproprietario = loteamento[_numeromatricula].proprietario;
+            loteamento[_numeromatricula].disponivel = false;
+            payable(msg.sender).transfer(msg.value);
+            loteamento[_numeromatricula].proprietario = msg.sender;
+            
+            
+           }
+
+    function AlterarStatusImovel (uint _numeromatricula, uint _valordolote, bool _disponivel) public returns (uint, string memory) {
+
+        require (msg.sender == loteamento[_numeromatricula].proprietario, "o status do imovel so pode ser alterado peo proprietario do imovel");
+        require (_valordolote > 0, " O valor do lote nao pode ser zero");
+        loteamento[_numeromatricula].valordolote = _valordolote;
+        loteamento[_numeromatricula].disponivel = _disponivel;
+
+        return (loteamento[_numeromatricula].valordolote, "esse e o novo valor do lote");
+ 
+    }        
+
+    function Doarpropriedade (uint _numeromatricula, address _novoProprietario) public returns (address, string memory) {
+
+        require (msg.sender == loteamento[_numeromatricula].proprietario, "apenas o proprietario pode fazer a transferencia");
+        require (loteamento[_numeromatricula].disponivel, "o imovel deve estar disponivel");
+        loteamento[_numeromatricula].proprietario = _novoProprietario;
+        return (loteamento[_numeromatricula].proprietario, "voce doou o imovel para a carteira");
+
+    }
+ }
+
+
+
